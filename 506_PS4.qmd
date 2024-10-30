@@ -19,10 +19,11 @@ library(dplyr)
 ```
 
 ```{r}
+# Showing Work for 1a in this R Chunk: 
+
 # Data in this tibble
 nycflights13::flights
 
-# 1st: Departures
 # Exclude those destinatios with under 10 flights:
 flights_10_plus <- flights %>%
                     group_by(dest) %>%
@@ -59,7 +60,7 @@ airport_names <- flights_dep_stats %>%
 ```
 
 ```{r}
-# Display results neatly:
+# Display results for 1a neatly:
 
 # Departures tibble
 departures <- flights_dep_stats %>%
@@ -82,8 +83,26 @@ arrivals <- flights %>%
 ### 1b:
 
 ```{r}
+# Calculate speed since we don't have it
+speed <- flights %>%
+          mutate(speed_mph = distance / (air_time / 60)) %>% 
+          select(distance, air_time, speed_mph) # Correct calculation!
 
+# Model in planes tibble, left join and combine speed calc from above
+fastest_plane <- flights %>%
+                  mutate(speed_mph = distance / (air_time / 60)) %>% 
+                  left_join(planes, join_by("tailnum" == "tailnum")) %>%
+                  group_by(model) %>% # For each model, get the average speed and flight count
+                    summarise(avg_speed_mph = round(mean(speed_mph, na.rm = TRUE), 1),
+                              num_flights = n()) %>%
+                    arrange(desc(avg_speed_mph)) %>% # Sort data by fastest speed 1st
+                    slice(1) %>% # Limit output by row with largest average speed
+                    select(model, avg_speed_mph, num_flights) # Only displaying relevant rows
+                  ungroup()
+fastest_plane
 ```
+
+Answer: The aircraft model with the fastest average speed was 777-222 with 482.6 mph on average, and it took 4 flights.
 
 ## Problem 2:
 
@@ -112,4 +131,5 @@ arrivals <- flights %>%
 
 ### Attribution of Sources:
 
--   1: <https://dplyr.tidyverse.org/reference/mutate-joins.html> Used this to figure out how to join the airport names to the flight codes, especially with using "join_by"
+-   1a: <https://dplyr.tidyverse.org/reference/mutate-joins.html> Used this to figure out how to join the airport names to the flight codes, especially with using "join_by"
+-   1b: <https://dplyr.tidyverse.org/reference/slice.html> using slice for limiting the rows that get outputted
