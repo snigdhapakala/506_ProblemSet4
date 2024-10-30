@@ -1,0 +1,115 @@
+---
+title: "STATS 506 Problem Set 4"
+author: "Snigdha Pakala"
+format: html
+editor: visual
+---
+
+### Link to my GitHub repository: [https://github.com/snigdhapakala/506_ProblemSet](https://github.com/snigdhapakala/506_ProblemSet3){.uri}fill this
+
+## Problem 1
+
+### 1a:
+
+```{r}
+install.packages("nycflights13_1.0.2.tar.gz")
+library(nycflights13)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+# Data in this tibble
+nycflights13::flights
+
+# 1st: Departures
+# Exclude those destinatios with under 10 flights:
+flights_10_plus <- flights %>%
+                    group_by(dest) %>%
+                    filter(n() >= 10) %>%
+                    summarise(flight_count = n()) %>%
+                    arrange(flight_count) %>%
+                    ungroup()
+flights_10_plus
+# 3 destinations with less than 10 flights, removed from this filtered list
+
+# Summarize mean and median departure delays
+flights_dep_stats <- flights %>%
+                      group_by(dest) %>%
+                        filter(n() >= 10) %>%
+                      ungroup() %>%
+                      group_by(origin) %>%
+                        summarise(mean_dep_delay = round(mean(dep_delay, na.rm = TRUE), 1),
+                                  median_dep_delay = round(median(dep_delay, na.rm = TRUE), 1)
+                                  )%>%
+                        arrange(desc(mean_dep_delay)) %>%
+                      ungroup()
+
+# Sanity check
+row_count_origin <- flights %>% 
+                    distinct(origin) # We're good!
+
+# Display airport name and not code:
+
+# Airport names is shown in this tibble: faa in airports has information that origin does
+nycflights13::airports
+
+airport_names <- flights_dep_stats %>%
+                left_join(airports, join_by("origin" == "faa"))
+```
+
+```{r}
+# Display results neatly:
+
+# Departures tibble
+departures <- flights_dep_stats %>%
+              left_join(airports, join_by("origin" == "faa")) %>%
+              select(name, mean_dep_delay, median_dep_delay)
+#########################################################################
+
+# Arrivals tibble: same process as above, just altogether since I know it works
+arrivals <- flights %>%
+            group_by(dest) %>%
+              filter(n() >= 10) %>%
+              summarise(mean_arr_delay = round(mean(arr_delay, na.rm = TRUE), 1),
+                        median_arr_delay = round(median(arr_delay, na.rm = TRUE), 1)) %>%
+              arrange(desc(mean_arr_delay)) %>%
+            ungroup() %>%
+            left_join(airports, join_by("dest" == "faa")) %>%
+            select(name, mean_arr_delay, median_arr_delay)
+```
+
+### 1b:
+
+```{r}
+
+```
+
+## Problem 2:
+
+```{r}
+```
+
+## Problem 3
+
+### 3a:
+
+```{r}
+
+```
+
+### 3b:
+
+```{r}
+
+```
+
+### 3c:
+
+```{r}
+
+```
+
+### Attribution of Sources:
+
+-   1: <https://dplyr.tidyverse.org/reference/mutate-joins.html> Used this to figure out how to join the airport names to the flight codes, especially with using "join_by"
