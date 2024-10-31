@@ -5,7 +5,9 @@ format: html
 editor: visual
 ---
 
-### Link to my GitHub repository: [https://github.com/snigdhapakala/506_ProblemSet](https://github.com/snigdhapakala/506_ProblemSet3){.uri}fill this
+### Link to my GitHub repository: 
+
+### <https://github.com/snigdhapakala/506_ProblemSet4>
 
 ## Problem 1
 
@@ -122,11 +124,12 @@ Answer: The aircraft model with the fastest average speed was 777-222 with 482.6
 #' @examples
 get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
 
-    # Check input for month is valid: numeric must be between 1 and 12, string must be correctly spelled month name 
+  # Provide correct month and abreviations to match to later
   correct_months <- c("January", "February", "March", "April", "May", "June", 
                      "July", "August", "September", "October", "November", "December")
   correct_month_abbrs <- substr(correct_months, 1, 3)
-  # If month is a string, make sure it is valid. Otherwise, if it's not numeric, or a valid number 1 through 12, error out:
+  
+  # If month is a string, make sure it is valid, and convert to month number. Otherwise, if it's not numeric, or a valid number 1 through 12, error out.
   if (month %>% is.character) {
     if (month %in% correct_months) {
       month <- match(month, correct_months)  # Extract month number from month name
@@ -175,7 +178,10 @@ get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
   
 }
 
-# Test cases to ensure it works
+nnmaps = read.csv("nycflights13_1.0.2.tar.gz")
+
+# Test cases to ensure it works:
+
 # get_temp("Apr", 1999, data = nnmaps)
 # get_temp("Apr", 1999, data = nnmaps, celsius = TRUE)
 # get_temp(10, 1998, data = nnmaps, average_fn = median)
@@ -191,23 +197,110 @@ get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
 
 ## Problem 3
 
-### 3a:
+### 3a: Change in sales price over time
 
 ```{r}
+# Load necessary libraries
+# Libraries
+library(ggplot2)
+library(dplyr)
 
+art_sales <- read.csv("df_for_ml_improved_new_market.csv")
+summary(art_sales$price_usd)
+min(art_sales$year)
+max(art_sales$year)
+# 15 years of data here, let's group by year and see the trend of the price_usd
+
+art_sales_by_year <- art_sales %>%
+  group_by(year) %>%
+  summarize(avg_sales_price = mean(price_usd, na.rm = TRUE)) %>%
+  ungroup()
+
+
+ggplot(art_sales_by_year, aes(x = year, y = avg_sales_price)) +
+  geom_line(color = "brown4", size = 1) +
+  geom_point(color = "brown4", size = 2) +
+  geom_smooth(method = "loess", color = "blue", fill = "bisque2", linetype = "dashed") +
+  labs(
+    title = "Average Sales Price in USD Over Time",
+    x = "Year",
+    y = "Average Sales Price (USD)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
 ```
+
+To answer a question about whether the USD price is changing over time, a line plot with years on the X axis and average yearly USD price on the Y axis can help identify trends over time and reveal increases/decreases in price, justifying my approach for this problem. Looking at this plot, we see that there is an overall change in the sales price in USD over time, and this trend is mostly increasing. In 1997 the average sales price was under \$10,000 and in 2012 it was about 3 times that much, despite accounting for a dip in prices from a few years prior. In order to better see this trend, I used a smoothing Loess function in my plot, which helps clearly see that the general trend of prices over the years is that they have been increasing. Now some might argue that average prices started declining around 2008 and this is no longer an upwards trend. However, until we have more data over time, we cannot make a claim that this drop will continue to happen, or something like this trend follows a sine curve. Thus, with the data at hand, the trend shows that prices have definitely increased over time from what they were. This might be due to a growing demand for art, increased globalization and technology allowing for more artists' work to be noticed by the public, inflation and other economic trends. This graph does a great job of showing that in general, average sale prices have increased over the 15 years data was collected.
 
 ### 3b:
 
 ```{r}
 
+library(ggplot2)
+library(dplyr)
+
+art_sales_long <- art_sales %>%
+  pivot_longer(cols = starts_with("Genre__"), names_to = "Genre", values_to = "Sales") %>%
+  filter(Sales == 1) %>%  # Filter only where genre is marked as 1
+  mutate(Genre = str_replace(Genre, "Genre___", "")) %>%  # Remove "Genre___" prefix 
+  count(year, Genre) %>%
+  group_by(year) %>%
+  mutate(Proportion = (n / sum(n)))  # Calculate proportion per year
+
+
+ggplot(art_sales_long, aes(x = year, y = Proportion, fill = Genre)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Pastel1") +
+  labs(title = "Distribution of Art Sales by Genre Across Years",
+       x = "Year",
+       y = "Proportion of Sales",
+       fill = "Genre") +
+  theme_minimal(base_size = 14) +  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
+
+The important aspect of this graph is that it needs to measure art sales across different Genres over time, so that's 3 different aspects of the data to simultaneously look at. With something like this, a stacked bar plot made the most sense to me. Each year is a bar plot where the different colors signify the different genres, and the proportion of that color in that bar is significant to the proportion of art sales within that genre in that year. This gives us a quick look at changes for each genre in art sales over time. For instance, through this we can say the following:
+
+-   The painting genre has declined in proportion of art sales compared to the other genres over time, while photography has increased in proportion of art sales over time.
+
+-   Within all the art sales in 2000, sculpture made up the highest proportion of art sales while print made up the lowest proportion.
+
+Something to keep in mind is combining with the previous visual, since there was a general increase in art sales, the proportions per year in this stacked bar plot might be misleading because they don't visually address that increase in sales over time. For instance, between 2007 and 2008, photography art sales might have taken up similar proportions of each year, but since we know from plot 1 that average sale prices peaked in 2008, there might be a significant difference in the absolute dollar amount of photography sales between the two years.
+
+Since this question asks about the distribution of genre of sales over time, this plot suffices in helping us answer. I would say that the distribution of genre of sales over time changes quite a bit till 2001. From 1997 to 2001 there are more obvious changes in trends (proportion of art sales of "other" and "paintings" genres declined a good amount, while the proportion of art sales of "photography" began increasing. But 2001 onwards, the proportions of each of these genres seems to be, in general, pretty constant in yearly art sales. So I would say no, the distribution of genre of sales across years does not appear to change, especially after 2001.
 
 ### 3c:
 
 ```{r}
 
+# Calculate average sale price per genre per year
+average_price_genre <- art_sales %>%
+  pivot_longer(cols = starts_with("Genre__"), names_to = "Genre", values_to = "Sales") %>%
+  filter(Sales == 1) %>%  # Keep only rows where a genre is marked as sold
+  mutate(Genre = str_replace(Genre, "Genre___", "")) %>%
+  group_by(year, Genre) %>%
+  summarize(Average_Price = mean(price_usd, na.rm = TRUE), .groups = "drop")
+
+# Plotting average sale price over time for each genre
+ggplot(average_price_genre, aes(x = year, y = Average_Price, color = Genre, group = Genre)) +
+  geom_line(size = 1) +
+  geom_point() +
+  scale_color_brewer(palette = "Pastel1") +
+  labs(title = "Average Sale Price by Genre Over Time",
+       x = "Year",
+       y = "Average Sale Price (USD)",
+       color = "Genre") +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
+
+This chart does a good job of combining aspects from the previous 2 charts to show trends in pricing over time that are specific to each genre. It’s a more detailed look at how the art sale price of each genre changes over time, rather than the genre’s share of total art sales. Now we can see that the photography genre is largely responsible for the upwards trend in art sale pricing over time. If it wasn't for photography, our change in art sale prices around 2008 would not be as easily discernable. The other 4 genres have very similar average sale prices following the anomalously high 2008 prices. This implies that the peak in sales in the first graph is likely due to the rise in photographic art demand rather than natural, slower price increases such as inflation and economic ebbs and flows. Another interesting aspect to note is the difference in impact seen in the printing genre on sales in this chart. In the previous one, printing was always overshadowed by the higher proportion genres. But here, we can see it had a high impact on those peaks in 2002 and 2004 seen in chart 1. All 5 genres' sale prices shot up in 2008 which implies that there's potentially another lurking variable that will explain all 5 genres being at their peaks in the same year. Sculpture trends, although also generally increasing, are increasing at the lowest rate compared to the other genres. Finally, the "other" genre and painting genre follow an extremely similar trend over time for their sale price averages.
 
 ### Attribution of Sources:
 
@@ -216,3 +309,9 @@ get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
 -   2: <https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/match> Used this to convert month names to month counts if user entered name or abbreviation
 -   2: <https://stackoverflow.com/questions/70518374/how-to-use-pipe-in-r-with-dollar-sign> the as.list helped me realize how to incorporate more piping especially when I was checking for the type of inputs
 -   2: <https://www.r-bloggers.com/2019/07/bang-bang-how-to-program-with-dplyr/#google_vignette> wanted to use the bang-bang operator to pass non-standard evaluation variables into a tidyverse function, so that year and month could be evaluated as their actual values rather than being treated as literal variable names
+-   3a: [https://mgimond.github.io/ES218/bivariate.html#:\~:text=The%20loess%20fit%20can%20be,)%2](https://mgimond.github.io/ES218/bivariate.html#:~:text=The%20loess%20fit%20can%20be,)%2C%20and%20degree%20(%20).&text=The%20modeled%20loess%20curve%20can,plot%20using%20the%20lines%20function.&text=In%20ggplot2%20simply%20pass%20the,parameter%20to%20the%20stat_smooth%20function.)
+-   [C%20and%20degree%20(%20).&text=The%20modeled%20loess%20curve%20can,plot%20using%2](https://mgimond.github.io/ES218/bivariate.html#:~:text=The%20loess%20fit%20can%20be,)%2C%20and%20degree%20(%20).&text=The%20modeled%20loess%20curve%20can,plot%20using%20the%20lines%20function.&text=In%20ggplot2%20simply%20pass%20the,parameter%20to%20the%20stat_smooth%20function.)
+-   [0the%20lines%20function.&text=In%20ggplot2%20simply%20pass%20the,parameter%20to%20the](https://mgimond.github.io/ES218/bivariate.html#:~:text=The%20loess%20fit%20can%20be,)%2C%20and%20degree%20(%20).&text=The%20modeled%20loess%20curve%20can,plot%20using%20the%20lines%20function.&text=In%20ggplot2%20simply%20pass%20the,parameter%20to%20the%20stat_smooth%20function.)
+-   [%20stat_smooth%20function.](https://mgimond.github.io/ES218/bivariate.html#:~:text=The%20loess%20fit%20can%20be,)%2C%20and%20degree%20(%20).&text=The%20modeled%20loess%20curve%20can,plot%20using%20the%20lines%20function.&text=In%20ggplot2%20simply%20pass%20the,parameter%20to%20the%20stat_smooth%20function.) while reading this for EDA inspiration, I came about the code for the Loess smoothing function and figured it would be useful in visualizing the overall trend to answer this question
+-   3a: <https://sape.inf.usi.ch/quick-reference/ggplot2/colour> used for the ggplot colors
+-   3b: <https://r-graph-gallery.com/38-rcolorbrewers-palettes.html> used for scale_fill_brewer pallette in ggplot
