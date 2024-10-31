@@ -107,6 +107,86 @@ Answer: The aircraft model with the fastest average speed was 777-222 with 482.6
 ## Problem 2:
 
 ```{r}
+
+#' Title This function will provide the average temperature for a requested month
+#'
+#' @param month numeric 1-12 or a string
+#' @param year numeric year
+#' @param data dataset to obtain the data from
+#' @param celsius whether temperature should be in celsius. Default is false
+#' @param average_fn function with which to compute the mean. Default is mean()
+#'
+#' @return A numeric vector of length 1 that returns the temperature in the given month or provides an error when incorrect input is provided
+#' @export
+#'
+#' @examples
+get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
+
+    # Check input for month is valid: numeric must be between 1 and 12, string must be correctly spelled month name 
+  correct_months <- c("January", "February", "March", "April", "May", "June", 
+                     "July", "August", "September", "October", "November", "December")
+  correct_month_abbrs <- substr(correct_months, 1, 3)
+  # If month is a string, make sure it is valid. Otherwise, if it's not numeric, or a valid number 1 through 12, error out:
+  if (month %>% is.character) {
+    if (month %in% correct_months) {
+      month <- match(month, correct_months)  # Extract month number from month name
+    } else if (month %in% correct_month_abbrs) {
+      month <- match(month, correct_month_abbrs)  # Extract month number from abbreviation 
+    }
+  }
+  else if (month %>% is.numeric) {
+    if (month < 1 || month > 12) {
+      stop("Month number must be between 1 and 12 to be valid.")
+    }
+  }
+  else{
+    stop("Month should be a number between 1 and 12, or a valid month name or 3-letter abbreviation.")
+  }
+  
+  # Check input to see if year is valid: numeric and between 1997 and 2000 inclusive, since this is what we have in the data
+  if (!(year %>% is.numeric)) {
+    stop("Year should be a 4 digit numeric number ")
+  }
+  if (!(year %in% 1997:2000)) {
+    stop("Data only has years 1997 through 2000. No data on temperatures outside of this range.")
+  }
+  
+  # Seems implicit that data is nmmaps, will ignore checking this
+  
+  # Check celsius is either left blank or logical: check if there is an input provided by the user, and if so, ensure it is a logical
+  if (!(celsius %>% is.logical()) || length(celsius) != 1) {
+    stop("The 'celsius' argument must be either 'TRUE' or 'FALSE'.")
+  }
+  
+  # Check that average_fn is a function
+  if (!(average_fn %>% is.function)) {
+    stop("average_fn must be a function")
+  }
+  
+  temp_result <- data %>%
+    rename(year_data = year) %>% # Was getting an error if I didn't differentiate between input year and year column in the data
+    filter(year_data == !!year, month_numeric == !!month) %>%
+    summarise(avg_temp = average_fn(temp))  %>%
+    mutate(avg_temp = if_else(celsius, (avg_temp - 32) * (5/9), avg_temp)) %>%
+    select(avg_temp) %>%
+    as.numeric
+  
+  return(temp_result)
+  
+}
+
+# Test cases to ensure it works
+# get_temp("Apr", 1999, data = nnmaps)
+# get_temp("Apr", 1999, data = nnmaps, celsius = TRUE)
+# get_temp(10, 1998, data = nnmaps, average_fn = median)
+# get_temp(13, 1998, data = nnmaps) # Errors out
+# get_temp(2, 2005, data = nnmaps) # Errors out
+# get_temp("November", 1999, data =nnmaps, celsius = TRUE, average_fn = function(x) {
+#            x %>% sort -> x
+#            x[2:(length(x) - 1)] %>% mean %>% return
+#          })
+
+
 ```
 
 ## Problem 3
@@ -133,3 +213,6 @@ Answer: The aircraft model with the fastest average speed was 777-222 with 482.6
 
 -   1a: <https://dplyr.tidyverse.org/reference/mutate-joins.html> Used this to figure out how to join the airport names to the flight codes, especially with using "join_by"
 -   1b: <https://dplyr.tidyverse.org/reference/slice.html> using slice for limiting the rows that get outputted
+-   2: <https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/match> Used this to convert month names to month counts if user entered name or abbreviation
+-   2: <https://stackoverflow.com/questions/70518374/how-to-use-pipe-in-r-with-dollar-sign> the as.list helped me realize how to incorporate more piping especially when I was checking for the type of inputs
+-   2: <https://www.r-bloggers.com/2019/07/bang-bang-how-to-program-with-dplyr/#google_vignette> wanted to use the bang-bang operator to pass non-standard evaluation variables into a tidyverse function, so that year and month could be evaluated as their actual values rather than being treated as literal variable names
