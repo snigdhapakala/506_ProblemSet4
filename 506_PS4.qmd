@@ -1,11 +1,13 @@
 ---
 title: "STATS 506 Problem Set 4"
 author: "Snigdha Pakala"
-format: html
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
-### Link to my GitHub repository: 
+### Link to my GitHub repository:
 
 ### <https://github.com/snigdhapakala/506_ProblemSet4>
 
@@ -14,7 +16,7 @@ editor: visual
 ### 1a:
 
 ```{r}
-install.packages("nycflights13_1.0.2.tar.gz")
+#install.packages("nycflights13")
 library(nycflights13)
 library(tidyverse)
 library(dplyr)
@@ -99,7 +101,7 @@ fastest_plane <- flights %>%
                               num_flights = n()) %>%
                     arrange(desc(avg_speed_mph)) %>% # Sort data by fastest speed 1st
                     slice(1) %>% # Limit output by row with largest average speed
-                    select(model, avg_speed_mph, num_flights) # Only displaying relevant rows
+                    select(model, avg_speed_mph, num_flights) %>% # Only displaying relevant rows
                   ungroup()
 fastest_plane
 ```
@@ -178,7 +180,7 @@ get_temp <- function(month, year, data, celsius = FALSE, average_fn = mean) {
   
 }
 
-nnmaps = read.csv("nycflights13_1.0.2.tar.gz")
+nnmaps = read.csv("chicago-nmmaps.csv")
 
 # Test cases to ensure it works:
 
